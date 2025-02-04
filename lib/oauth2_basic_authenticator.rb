@@ -223,7 +223,6 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
     LOG
 
     if SiteSetting.oauth2_fetch_user_details? && SiteSetting.oauth2_user_json_url.present?
-      
       if fetched_user_details = fetch_user_details(auth["credentials"]["token"], auth["uid"])
         auth["uid"] = fetched_user_details[:user_id] if fetched_user_details[:user_id]
         auth["info"]["nickname"] = fetched_user_details[:username] if fetched_user_details[
@@ -255,9 +254,15 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         return result
       end
     end
+    info = auth&.info
 
-    super(auth, existing_account: existing_account)
+    email_user = UserEmail.find_by(email: info["email"])
+
+    user = email_user&.user_id ? User.find(email_user.user_id) : User.create!(username: info["nickname"], name: info["name"], email: info["email"])
+
+    super(auth, existing_account: user)
   end
+
 
   def enabled?
     SiteSetting.oauth2_enabled
