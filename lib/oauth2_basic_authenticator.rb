@@ -257,7 +257,27 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
     info = auth&.info
 
     email_user = UserEmail.find_by(email: info["email"])
-    user = email_user&.user_id ? User.find(email_user.user_id) : User.create!(username: (info["email"].split('@').first) + auth["uid"].to_s, name: info["name"], email: info["email"])
+    user = if email_user&.user_id
+      User.find(email_user.user_id)
+    else
+      user_count = User.where(username: info["name"]).count
+      user_name = (info["name"] + user_count.to_s).rjust(3, '0')
+      Rails.logger.info(">>>>>>>>>>user_name #{user_name}")
+      attempt = 0
+      loop do
+        begin
+          user = User.create!(username: user_name, name: info["name"], email: info["email"])
+          puts "User created successfully: #{user.username}"
+          Rails.logger.info(">>>>>>>>>>user.username #{user.username}")
+          break  # Exit loop if successful
+        rescue ActiveRecord::RecordInvalid => e
+          attempt += 1
+          user_name += "_"  # Append "_" to the username and retry
+          puts "Retrying with username: #{user_name} (Attempt #{attempt})"
+          Rails.logger.info(">>>>>>>>>>Retrying with username: #{user_name}")
+        end
+      end
+    end
 
     super(auth, existing_account: user)
   end
