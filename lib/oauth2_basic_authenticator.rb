@@ -257,8 +257,7 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
     info = auth&.info
 
     email_user = UserEmail.find_by(email: info["email"])
-
-    user = email_user&.user_id ? User.find(email_user.user_id) : User.create!(username: info["nickname"], name: info["name"], email: info["email"])
+    user = email_user&.user_id ? User.find(email_user.user_id) : User.create!(username: (info["email"].split('@').first) + auth["uid"].to_s, name: info["name"], email: info["email"])
 
     super(auth, existing_account: user)
   end
