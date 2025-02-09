@@ -272,7 +272,8 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
           break  # Exit loop if successful
         rescue ActiveRecord::RecordInvalid => e
           attempt += 1
-          user_name += "_"  # Append "_" to the username and retry
+          user_count +=1
+          user_name = (info["name"] + user_count.to_s).rjust(3, '0')
           puts "Retrying with username: #{user_name} (Attempt #{attempt})"
           Rails.logger.info(">>>>>>>>>>Retrying with username: #{user_name}")
         end
