@@ -261,7 +261,7 @@ class OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
       User.find(email_user.user_id)
     else
       user_count = User.where(username: info["name"]).count
-      user_name = (info["name"] + user_count.to_s).rjust(3, '0')
+      user_name = (info["name"].split(" ").first + user_count.to_s).rjust(3, '0')
       Rails.logger.info(">>>>>>>>>>user_name #{user_name}")
       attempt = 0
       loop do
